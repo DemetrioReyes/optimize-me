@@ -1,5 +1,6 @@
 from typing import Any, NewType
 import networkx as nx
+from collections import deque
 
 
 # derived from https://github.com/langflow-ai/langflow/pull/5261
@@ -139,14 +140,17 @@ def find_node_clusters(nodes: list[dict], edges: list[dict]) -> list[list[dict]]
 
         # Start a new cluster
         cluster = []
-        queue = [node_id]
+        queue = deque([node_id])
         visited.add(node_id)
 
         while queue:
-            current = queue.pop(0)
+            current = queue.popleft()
             cluster.append(node_map[current])
 
-            for neighbor in adjacency.get(current, []):
+            if current not in adjacency:
+                continue
+
+            for neighbor in adjacency[current]:
                 if neighbor not in visited:
                     visited.add(neighbor)
                     queue.append(neighbor)
