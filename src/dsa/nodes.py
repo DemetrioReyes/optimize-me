@@ -1,5 +1,6 @@
 from typing import Any, NewType
 import networkx as nx
+from collections import deque
 
 
 # derived from https://github.com/langflow-ai/langflow/pull/5261
@@ -111,20 +112,18 @@ def find_node_with_highest_degree(
 
 
 def find_node_clusters(nodes: list[dict], edges: list[dict]) -> list[list[dict]]:
-    # Create node ID to node mapping for easy lookup
-    node_map = {node["id"]: node for node in nodes}
-
-    # Create an adjacency list
+    # Create node ID to node mapping and adjacency list for easy lookup
+    node_map = {}
     adjacency = {}
+
+    for node in nodes:
+        node_id = node["id"]
+        node_map[node_id] = node
+        adjacency[node_id] = []
+
+    # Populate adjacency list
     for edge in edges:
-        src = edge["source"]
-        tgt = edge["target"]
-
-        if src not in adjacency:
-            adjacency[src] = []
-        if tgt not in adjacency:
-            adjacency[tgt] = []
-
+        src, tgt = edge["source"], edge["target"]
         adjacency[src].append(tgt)
         adjacency[tgt].append(src)  # Assuming undirected graph for clustering
 
@@ -143,10 +142,10 @@ def find_node_clusters(nodes: list[dict], edges: list[dict]) -> list[list[dict]]
         visited.add(node_id)
 
         while queue:
-            current = queue.pop(0)
+            current = queue.pop(0)  # pop first element in a list
             cluster.append(node_map[current])
 
-            for neighbor in adjacency.get(current, []):
+            for neighbor in adjacency[current]:
                 if neighbor not in visited:
                     visited.add(neighbor)
                     queue.append(neighbor)
